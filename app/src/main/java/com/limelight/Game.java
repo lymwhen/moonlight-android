@@ -369,7 +369,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
 
         // Check if the user has enabled performance stats overlay
-        if (prefConfig.enablePerfOverlay) {
+        if (prefConfig.enablePerfOverlay || prefConfig.enableMinPerfOverlay) {
             performanceOverlayView.setVisibility(View.VISIBLE);
         }
 
@@ -613,7 +613,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     virtualController.show();
                 }
 
-                if (prefConfig.enablePerfOverlay) {
+                if (prefConfig.enablePerfOverlay || prefConfig.enableMinPerfOverlay) {
                     performanceOverlayView.setVisibility(View.VISIBLE);
                 }
 
@@ -2638,6 +2638,16 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public void onPerfUpdate(final String text) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                performanceOverlayView.setText(text);
+            }
+        });
+    }
+
+    @Override
+    public void onMinPerfUpdate(final String text) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

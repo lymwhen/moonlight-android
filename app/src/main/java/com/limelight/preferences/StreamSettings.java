@@ -667,6 +667,32 @@ public class StreamSettings extends Activity {
                     return true;
                 }
             });
+            findPreference(PreferenceConfiguration.ENABLE_MIN_PERF_OVERLAY_STRING).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    boolean b = (Boolean) newValue;
+                    if(b) {
+                        CheckBoxPreference cb = (CheckBoxPreference) findPreference(PreferenceConfiguration.ENABLE_PERF_OVERLAY_STRING);
+                        cb.setChecked(!b);
+                    }
+
+                    // Allow the original preference change to take place
+                    return true;
+                }
+            });
+            findPreference(PreferenceConfiguration.ENABLE_PERF_OVERLAY_STRING).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    boolean b = (Boolean) newValue;
+                    if(b) {
+                        CheckBoxPreference cb = (CheckBoxPreference) findPreference(PreferenceConfiguration.ENABLE_MIN_PERF_OVERLAY_STRING);
+                        cb.setChecked(!b);
+                    }
+
+                    // Allow the original preference change to take place
+                    return true;
+                }
+            });
         }
     }
 }
