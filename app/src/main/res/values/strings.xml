@@ -145,7 +145,9 @@
     <string name="addpc_wrong_sitelocal">That address doesn\'t look right. You must use your router\'s public IP address for streaming over the Internet.</string>
 
     <!-- Preferences -->
+    <string name="category_pref_info">Preferences Info</string>
     <string name="category_basic_settings">Basic Settings</string>
+    <string name="title_enable_reset_bitrate">Reset bitrate after preferences changed.</string>
     <string name="title_resolution_list">Video resolution</string>
     <string name="summary_resolution_list">Increase to improve image clarity. Decrease for better performance on lower end devices and slower networks.</string>
     <string name="title_native_res_dialog">Native Resolution Warning</string>
