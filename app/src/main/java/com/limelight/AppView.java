@@ -1,13 +1,36 @@
 package com.limelight;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.HashSet;
-import java.util.List;
+import android.app.Activity;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.limelight.computers.ComputerManagerListener;
 import com.limelight.computers.ComputerManagerService;
 import com.limelight.grid.AppGridAdapter;
+import com.limelight.iperf3.cmd.CmdCallback;
+import com.limelight.iperf3.cmd.Iperf3Cmd;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
@@ -22,32 +45,12 @@ import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
 import com.limelight.utils.UiHelper;
 
-import android.app.Activity;
-import android.app.Service;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-
 import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashSet;
+import java.util.List;
 
 public class AppView extends Activity implements AdapterFragmentCallbacks {
     private AppGridAdapter appGridAdapter;
@@ -317,6 +320,39 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         // Bind to the computer manager service
         bindService(new Intent(this, ComputerManagerService.class), serviceConnection,
                 Service.BIND_AUTO_CREATE);
+
+        Iperf3Cmd c = new Iperf3Cmd(this, new CmdCallback() {
+            @Override
+            public void onRawOutput(String rawOutputLine) {
+                Log.d("CMD", "onRawOutput: " + rawOutputLine);
+            }
+
+            @Override
+            public void onConnecting(String destHost, int destPort) {
+                Log.d("CMD", "onConnecting: " + destHost + " " + destPort);
+            }
+
+            @Override
+            public void onConnected(String localAddr, int localPort, String destAddr, int destPort) {
+                Log.d("CMD", "onConnected: " + localAddr + " " + localPort + " " + destAddr + " " + destPort);
+            }
+
+            @Override
+            public void onInterval(float timeStart, float timeEnd, String sendBytes, String bandWidth, boolean isDown) {
+                Log.d("CMD", "onInterval: " + timeStart + " " + timeEnd + " " + sendBytes + " " + bandWidth + " " + isDown);
+            }
+
+            @Override
+            public void onResult(float timeStart, float timeEnd, String sendBytes, String bandWidth, boolean isDown) {
+                Log.d("CMD", "onResult: " + timeStart + " " + timeEnd + " " + sendBytes + " " + bandWidth + " " + isDown);
+            }
+
+            @Override
+            public void onError(String errMsg) {
+                Log.d("CMD", "onError: " + errMsg);
+            }
+        });
+        c.exec(new String[] {"-c", "192.168.31.151", "-R"});
     }
 
     private void updateHiddenApps(boolean hideImmediately) {
