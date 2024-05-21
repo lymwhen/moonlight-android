@@ -27,10 +27,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="left"
+        android:layout_margin="4dp"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:gravity="left"
-        android:textColor="#80000000"
-        android:textSize="11sp"
+        android:textColor="#76b900"
+        android:textSize="12sp"
         android:preferKeepClear="true"
         android:visibility="gone" />
 

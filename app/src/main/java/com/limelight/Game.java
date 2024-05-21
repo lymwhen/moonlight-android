@@ -52,6 +52,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.hardware.input.InputManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
@@ -271,6 +272,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 
         performanceOverlayView = findViewById(R.id.performanceOverlay);
+        Typeface typeFace =Typeface.createFromAsset(getAssets(), "fonts/Players.ttf");
+        performanceOverlayView.setTypeface(typeFace);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
 

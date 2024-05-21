@@ -7,8 +7,8 @@ public class StringUtils {
     public static String byteps2BpsStr(long byteps) {
         float cur = byteps * 8;
         int unitIndex = 0;
-        while(cur >= 1024 && unitIndex < BITRATE_UNITS.length - 1) {
-            cur = cur / 1024;
+        while(cur >= 1000 && unitIndex < BITRATE_UNITS.length - 1) {
+            cur = cur / 1000;
             unitIndex++;
         }
         return String.format((cur >= 10 || cur == 0 ? "%.0f" : "%.1f") + " %sbps", cur, BITRATE_UNITS[unitIndex]);

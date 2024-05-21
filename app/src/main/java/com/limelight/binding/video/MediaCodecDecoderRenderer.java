@@ -1441,12 +1441,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                     StringBuilder sb = new StringBuilder();
 
                     if(fps.totalFps - fps.renderedFps > 5) {
-                        sb.append(String.format(" %.0f/%.0f/%.0f FPS", fps.renderedFps, fps.receivedFps, fps.totalFps)).append('\n');
+                        sb.append(String.format("%.0f/%.0f/%.0f FPS", fps.renderedFps, fps.receivedFps, fps.totalFps));
                     } else {
-                        sb.append(String.format(" %.0f FPS", fps.renderedFps)).append('\n');
+                        sb.append(String.format("%.0f FPS", fps.renderedFps));
                     }
-                    sb.append(String.format(" %d ms", (int) (rttInfo >> 32))).append('\n');
-                    sb.append(String.format(" %s", StringUtils.byteps2BpsStr(activeWindowVideoStats.getByteRate())));
+                    sb.append(String.format("  %d ms", (int) (rttInfo >> 32)));
+                    sb.append(String.format("  %s", StringUtils.byteps2BpsStr(activeWindowVideoStats.getByteRate())));
                     perfListener.onMinPerfUpdate(sb.toString());
 
                 } else {
@@ -1479,7 +1479,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                                 (float) lastTwo.maxHostProcessingLatency / 10,
                                 (float) lastTwo.totalHostProcessingLatency / 10 / lastTwo.framesWithHostProcessingLatency)).append('\n');
                     }
-                    sb.append(context.getString(R.string.perf_overlay_dectime, decodeTimeMs));
+                    sb.append(context.getString(R.string.perf_overlay_dectime, decodeTimeMs)).append('\n');
                     sb.append(context.getString(R.string.perf_overlay_bitrate, StringUtils.byteps2BpsStr(activeWindowVideoStats.getByteRate())));
                     perfListener.onPerfUpdate(sb.toString());
 
