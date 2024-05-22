@@ -12,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -42,12 +43,18 @@ import com.limelight.utils.Dialog;
 import com.limelight.utils.ServerHelper;
 import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
+import com.limelight.utils.StringUtils;
 import com.limelight.utils.UiHelper;
 
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.StringReader;
+import java.net.Socket;
+import java.nio.CharBuffer;
 import java.util.HashSet;
 import java.util.List;
 
@@ -329,6 +336,37 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 startActivity(new Intent(AppView.this, StreamSettings.class));
             }
         });
+
+        new connectthread().start();
+    }
+
+    class connectthread extends Thread {
+
+        @Override
+        public void run() {
+            Log.i("SP", "start");
+
+            try (Socket socket = new Socket("192.168.31.151", 8000);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
+                Log.i("SP", "connected");
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if(line.startsWith("--ctrl--:")) {
+                        Log.i("SP", line);
+                        final String xx = line;
+                        runOnUiThread(() -> {
+                            Log.i("SPU", xx);
+                            Toast.makeText(AppView.this, StringUtils.byteps2BpsStr(Long.parseLong(xx.split(":")[2])), Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void updateHiddenApps(boolean hideImmediately) {
