@@ -12,19 +12,24 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.limelight.computers.ComputerManagerListener;
 import com.limelight.computers.ComputerManagerService;
@@ -51,7 +56,7 @@ import java.io.StringReader;
 import java.util.HashSet;
 import java.util.List;
 
-public class AppView extends Activity implements AdapterFragmentCallbacks {
+public class AppView extends Activity implements AdapterFragmentCallbacks, CompoundButton.OnCheckedChangeListener {
     private AppGridAdapter appGridAdapter;
     private String uuidString;
     private ShortcutHelper shortcutHelper;
@@ -329,6 +334,50 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 startActivity(new Intent(AppView.this, StreamSettings.class));
             }
         });
+
+        vSettings = findViewById(R.id.v_settings);
+
+        // 反选设置的分辨率和帧率
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(AppView.this);
+        String curSettingsResolution = prefs.getString(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION);
+        String curSettingsFpg = prefs.getString(PreferenceConfiguration.FPS_PREF_STRING, PreferenceConfiguration.DEFAULT_FPS);
+
+        for (int i = 0; i < vSettings.getChildCount(); i++) {
+            ToggleButton tb = getSettingsToggleButtonAt(vSettings, i);
+            tb.setChecked(SETTINGS_RESOLUTIONS[i].equals(curSettingsResolution) && SETTINGS_FPS[i].equals(curSettingsFpg));
+            tb.setOnCheckedChangeListener(this);
+        }
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if(!buttonView.isFocused() && !buttonView.isPressed()) {
+            return;
+        }
+        if(isChecked) {
+            for (int i = 0; i < vSettings.getChildCount(); i++) {
+                ToggleButton tb = getSettingsToggleButtonAt(vSettings, i);
+                if(tb == buttonView) {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(AppView.this);
+                    prefs.edit().putString(PreferenceConfiguration.RESOLUTION_PREF_STRING, SETTINGS_RESOLUTIONS[i]).apply();
+                    prefs.edit().putString(PreferenceConfiguration.FPS_PREF_STRING, SETTINGS_FPS[i]).apply();
+
+                } else {
+                    tb.setChecked(false);
+                }
+            }
+        } else {
+            buttonView.setChecked(true);
+        }
+    }
+
+    String[] SETTINGS_RESOLUTIONS = new String[] {"3840x2160", "1920x1080", "1920x1080"};
+    String[] SETTINGS_FPS = new String[] {"60", "120", "60"};
+
+    ViewGroup vSettings;
+
+    public ToggleButton getSettingsToggleButtonAt(ViewGroup v, int i) {
+        return (ToggleButton) v.getChildAt(i);
     }
 
     private void updateHiddenApps(boolean hideImmediately) {
