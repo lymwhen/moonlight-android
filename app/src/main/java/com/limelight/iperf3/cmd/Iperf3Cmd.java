@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -31,7 +32,7 @@ public class Iperf3Cmd {
         init();
     }
 
-    private String EXECUTEABLE_NAME = "iperf3.17.1";
+    private String EXECUTEABLE_NAME = "iperf3";
 
     private Pattern CONNECTING_PATTERN = Pattern.compile("(Connecting to host (.*), port (\\d+))");
     private Pattern CONNECTED_PATTERN = Pattern.compile("(local (.*) port (\\d+) connected to (.*) port (\\d+))");
@@ -51,7 +52,7 @@ public class Iperf3Cmd {
     }
 
     private String getCmdPath() {
-        return context.getFilesDir().getAbsolutePath() + "/" + EXECUTEABLE_NAME;
+        return context.getCacheDir().getAbsolutePath() + "/" + EXECUTEABLE_NAME;
     }
 
     private void init() {
@@ -61,7 +62,7 @@ public class Iperf3Cmd {
             return;
         }
         try {
-            FileUtils.copyInputStreamToFile(context.getAssets().open("iperf3/" + getAbi() + "/" + EXECUTEABLE_NAME), cmdFile);
+            FileUtils.copyInputStreamToFile(context.getAssets().open("iperf3/" + EXECUTEABLE_NAME), cmdFile);
             cmdFile.setExecutable(true, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,35 +71,87 @@ public class Iperf3Cmd {
 
     public void exec(String[] args) {
         new Thread(() -> {
-            String[] cmdAndArgs = new String[args.length + 3];
-            cmdAndArgs[0] = getCmdPath();
-            cmdAndArgs[cmdAndArgs.length - 2] = "--tmp-template";
-            cmdAndArgs[cmdAndArgs.length - 1] = context.getCacheDir().getAbsolutePath() + "/iperf3.XXXXXX";
-            System.arraycopy(args, 0, cmdAndArgs, 1, args.length);
+//            String[] cmdAndArgs = new String[args.length + 3];
+//            cmdAndArgs[0] = getCmdPath();
+//            cmdAndArgs[cmdAndArgs.length - 2] = "--tmp-template";
+//            cmdAndArgs[cmdAndArgs.length - 1] = context.getCacheDir().getAbsolutePath() + "/iperf3.XXXXXX";
+//            System.arraycopy(args, 0, cmdAndArgs, 1, args.length);
 //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                Log.d("iperf3", "exec command: " + Arrays.stream(cmdAndArgs).collect(Collectors.joining(" ")));
+//                Log.d("iperf3", "exec command: " + Arrays.stream(cmdAndArgs).collect(Collectors.joining(" ")));
 //            }
 
             try {
-                Process process = Runtime.getRuntime().exec(cmdAndArgs);
-                parseArgs(cmdAndArgs);
+//                Log.i("CMD", "cmd: " + "chmod +x " + getCmdPath());
+//                execCommand("ls -l " + new File(getCmdPath()).getParentFile().getAbsolutePath());
+//                execCommand("/system/bin/chmod 755 " + getCmdPath());
+//                execCommand(context.getApplicationInfo().nativeLibraryDir + "/iperf3.so -c 192.168.31.151 -p 5201 -Z -R -P 4 -J -t 5 -l [128KB] -b [1GB] ");
+//                execCommand("ls -l " + context.getApplicationInfo().nativeLibraryDir);
+//                execCommand(context.getApplicationInfo().nativeLibraryDir + "/iperf3.so -help");
+                execCommand(context.getApplicationInfo().nativeLibraryDir + "/iperf3.so -c 192.168.31.151 -R");
+//                execCommand(getCmdPath() + " -help");
+//                execCommand(getCmdPath() + " -c 192.168.31.151 -R");
+//                Process process = Runtime.getRuntime().exec(cmdAndArgs);
+//                Process process = Runtime.getRuntime().exec(getCmdPath() + " -c 192.168.31.151 -R");
+//                parseArgs(cmdAndArgs);
 
-                try (
-                        InputStreamReader in = new InputStreamReader(process.getInputStream());
-                        BufferedReader outReader = new BufferedReader(in);
-//                        BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                ) {
-                    String line;
-                    while ((line = outReader.readLine()) != null) {
-                        parseToCallback(line);
-                    }
-                    Log.i("CMD", "exitValue: " + process.waitFor());
-                }
+//                try (
+//                        InputStreamReader in = new InputStreamReader(process.getInputStream());
+//                        BufferedReader outReader = new BufferedReader(in);
+////                        BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+//                ) {
+//                    String line;
+//                    while ((line = outReader.readLine()) != null) {
+//                        parseToCallback(line);
+//                    }
+//                    Log.i("CMD", "exitValue: " + process.waitFor());
+//                }
 
             } catch (Exception e) {
                 Log.e("CMD", e.getMessage(), e);
             }
         }).start();
+    }
+
+    public void execCommand(String command) {
+        Log.d("CMD", "exec: " + command);
+        try {
+            Runtime runtime = Runtime.getRuntime();
+            Process proc = runtime.exec(command);
+
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+
+            // 读取标准输出流
+            String s;
+            while ((s = stdInput.readLine()) != null) {
+                Log.d("CMD", s);
+            }
+
+//            int c;
+//            while ((c = stdInput.read()) != -1) {
+//                char ch = (char) c;
+//                // 将字符累加到StringBuilder中
+//                StringBuilder output = new StringBuilder();
+//                output.append(ch);
+//                // 将累加的字符转换成字符串，并打印日志
+//                Log.d("CMD", output.toString());
+//                Thread.sleep(10);
+//            }
+
+            // 读取标准错误流
+            while ((s = stdError.readLine()) != null) {
+                Log.d("CMD", "Error: " + s);
+            }
+
+            // 等待进程结束
+            proc.waitFor();
+
+            // 打印退出值
+            Log.d("CMD", "exit value = " + proc.exitValue());
+        } catch (Exception e) {
+            Log.d("CMD", "Exception: " + e.getMessage());
+            Log.e("CMD", e.getMessage(), e);
+        }
     }
 
     private void parseArgs(final String[] cmdAndArgs) {
