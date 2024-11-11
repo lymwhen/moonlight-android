@@ -49,6 +49,25 @@ import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
 import com.limelight.utils.UiHelper;
 
+import com.limelight.computers.ComputerManagerListener;
+import com.limelight.computers.ComputerManagerService;
+import com.limelight.grid.AppGridAdapter;
+import com.limelight.iperf3.cmd.CmdCallback;
+import com.limelight.iperf3.cmd.Iperf3Cmd;
+import com.limelight.nvstream.http.ComputerDetails;
+import com.limelight.nvstream.http.NvApp;
+import com.limelight.nvstream.http.NvHTTP;
+import com.limelight.nvstream.http.PairingManager;
+import com.limelight.preferences.PreferenceConfiguration;
+import com.limelight.ui.AdapterFragment;
+import com.limelight.ui.AdapterFragmentCallbacks;
+import com.limelight.utils.CacheHelper;
+import com.limelight.utils.Dialog;
+import com.limelight.utils.ServerHelper;
+import com.limelight.utils.ShortcutHelper;
+import com.limelight.utils.SpinnerDialog;
+import com.limelight.utils.UiHelper;
+
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -57,6 +76,9 @@ import java.util.HashSet;
 import java.util.List;
 
 public class AppView extends Activity implements AdapterFragmentCallbacks, CompoundButton.OnCheckedChangeListener {
+
+    public static final String TAG_IPERF_TEST = "IPERF_TEST";
+
     private AppGridAdapter appGridAdapter;
     private String uuidString;
     private ShortcutHelper shortcutHelper;
@@ -378,6 +400,39 @@ public class AppView extends Activity implements AdapterFragmentCallbacks, Compo
 
     public ToggleButton getSettingsToggleButtonAt(ViewGroup v, int i) {
         return (ToggleButton) v.getChildAt(i);
+
+        Iperf3Cmd c = new Iperf3Cmd(this, new CmdCallback() {
+            @Override
+            public void onRawOutput(String rawOutputLine) {
+                Log.d(TAG_IPERF_TEST, "onRawOutput: " + rawOutputLine);
+            }
+
+            @Override
+            public void onConnecting(String destHost, int destPort) {
+                Log.d(TAG_IPERF_TEST, "onConnecting: " + destHost + " " + destPort);
+            }
+
+            @Override
+            public void onConnected(String localAddr, int localPort, String destAddr, int destPort) {
+                Log.d(TAG_IPERF_TEST, "onConnected: " + localAddr + " " + localPort + " " + destAddr + " " + destPort);
+            }
+
+            @Override
+            public void onInterval(double timeStart, double timeEnd, double transfer, double bitrate) {
+                Log.d(TAG_IPERF_TEST, "onInterval: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
+            }
+
+            @Override
+            public void onResult(double timeStart, double timeEnd, double transfer, double bitrate) {
+                Log.d(TAG_IPERF_TEST, "onResult: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
+            }
+
+            @Override
+            public void onError(String errMsg) {
+                Log.d(TAG_IPERF_TEST, "onError: " + errMsg);
+            }
+        });
+        c.exec(new String[] {"-c", "192.168.31.151", "-R"});
     }
 
     private void updateHiddenApps(boolean hideImmediately) {
