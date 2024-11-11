@@ -10,9 +10,9 @@ public interface Iperf3Callback {
 
     void onConnected(String localAddr, int localPort, String destAddr, int destPort);
 
-    void onInterval(float timeStart, float timeEnd, String sendBytes, String bandWidth, boolean isDown);
+    void onInterval(double timeStart, double timeEnd, double transfer, double bitrate);
 
-    void onResult(float timeStart, float timeEnd, String sendBytes, String bandWidth, boolean isDown);
+    void onResult(double timeStart, double timeEnd, double transfer, double bitrate);
 
     void onError(String errMsg);
 }

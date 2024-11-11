@@ -53,6 +53,9 @@ import java.util.HashSet;
 import java.util.List;
 
 public class AppView extends Activity implements AdapterFragmentCallbacks {
+    
+    public static final String TAG_IPERF_TEST = "IPERF_TEST";
+    
     private AppGridAdapter appGridAdapter;
     private String uuidString;
     private ShortcutHelper shortcutHelper;
@@ -324,32 +327,32 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         Iperf3Cmd c = new Iperf3Cmd(this, new CmdCallback() {
             @Override
             public void onRawOutput(String rawOutputLine) {
-                Log.d("CMD", "onRawOutput: " + rawOutputLine);
+                Log.d(TAG_IPERF_TEST, "onRawOutput: " + rawOutputLine);
             }
 
             @Override
             public void onConnecting(String destHost, int destPort) {
-                Log.d("CMD", "onConnecting: " + destHost + " " + destPort);
+                Log.d(TAG_IPERF_TEST, "onConnecting: " + destHost + " " + destPort);
             }
 
             @Override
             public void onConnected(String localAddr, int localPort, String destAddr, int destPort) {
-                Log.d("CMD", "onConnected: " + localAddr + " " + localPort + " " + destAddr + " " + destPort);
+                Log.d(TAG_IPERF_TEST, "onConnected: " + localAddr + " " + localPort + " " + destAddr + " " + destPort);
             }
 
             @Override
-            public void onInterval(float timeStart, float timeEnd, String sendBytes, String bandWidth, boolean isDown) {
-                Log.d("CMD", "onInterval: " + timeStart + " " + timeEnd + " " + sendBytes + " " + bandWidth + " " + isDown);
+            public void onInterval(double timeStart, double timeEnd, double transfer, double bitrate) {
+                Log.d(TAG_IPERF_TEST, "onInterval: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
             }
 
             @Override
-            public void onResult(float timeStart, float timeEnd, String sendBytes, String bandWidth, boolean isDown) {
-                Log.d("CMD", "onResult: " + timeStart + " " + timeEnd + " " + sendBytes + " " + bandWidth + " " + isDown);
+            public void onResult(double timeStart, double timeEnd, double transfer, double bitrate) {
+                Log.d(TAG_IPERF_TEST, "onResult: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
             }
 
             @Override
             public void onError(String errMsg) {
-                Log.d("CMD", "onError: " + errMsg);
+                Log.d(TAG_IPERF_TEST, "onError: " + errMsg);
             }
         });
         c.exec(new String[] {"-c", "192.168.31.151", "-R"});

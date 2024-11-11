@@ -1,157 +1,81 @@
 package com.limelight.iperf3.cmd;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 
-import com.limelight.utils.DevUtils;
-
-import org.apache.commons.io.FileUtils;
-
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author shenyong
  * @date 2020-11-10
  */
 public class Iperf3Cmd {
+    
+    public static final String TAG = "Iperf3Cmd";
 
-    private Context context;
-    private CmdCallback callback;
+    private final Context context;
+    private final CmdCallback callback;
 
     public Iperf3Cmd(Context context, CmdCallback callback) {
         this.context = context;
         this.callback = callback;
-        init();
     }
 
-    private String EXECUTEABLE_NAME = "iperf3";
+    private static final String EXECUTABLE_NAME = "iperf3.so";
 
-    private Pattern CONNECTING_PATTERN = Pattern.compile("(Connecting to host (.*), port (\\d+))");
-    private Pattern CONNECTED_PATTERN = Pattern.compile("(local (.*) port (\\d+) connected to (.*) port (\\d+))");
-    private Pattern REPORT_PATTERN = Pattern.compile("(\\d{1,2}.\\d{2})-(\\d{1,2}.\\d{2})\\s+sec" +
-            "\\s+(\\d+(.\\d+)? [KMGT]?Bytes)\\s+(\\d+(.\\d+)? Mbits/sec)");
-    private Pattern UDP_LOSS = Pattern.compile("\\d+/\\d+ \\([\\d+-.e]+%\\)");
-    private Pattern TITLE_PATTERN = Pattern.compile("\\[\\s+ID\\]\\s+Interval\\s+Transfer\\s+Bandwidth");
-    private Pattern ERR_PATTERN = Pattern.compile("iperf3: error");
+    private final Pattern CONNECTING_PATTERN = Pattern.compile("(Connecting to host (.*), port (\\d+))");
+    private final Pattern CONNECTED_PATTERN = Pattern.compile("(local (.*) port (\\d+) connected to (.*) port (\\d+))");
+    private final Pattern REPORT_PATTERN = Pattern.compile("(\\d{1,2}.\\d{2})-(\\d{1,2}.\\d{2})\\s+sec" +
+            "\\s+(\\d+(.\\d+)?) [KMGT]?Bytes\\s+(\\d+(.\\d+)?) Mbits/sec");
+    private final Pattern UDP_LOSS = Pattern.compile("\\d+/\\d+ \\([\\d+-.e]+%\\)");
+    private final Pattern TITLE_PATTERN = Pattern.compile("\\[\\s+ID\\]");
+    private final Pattern ERR_PATTERN = Pattern.compile("iperf3: error");
 
     private int parallels = 0;
     private boolean isDown = false;
     // title出现次数。title栏输出第一次之后的、第二次之前的，是中间结果，第二次之后的是最终平均速率
     private int titleCnt = 0;
 
-    private String getAbi() {
-        return DevUtils.getCpuApi();
-    }
-
     private String getCmdPath() {
-        return context.getCacheDir().getAbsolutePath() + "/" + EXECUTEABLE_NAME;
-    }
-
-    private void init() {
-        File cmdFile = new File(getCmdPath());
-        if (cmdFile.exists()) {
-            cmdFile.setExecutable(true, true);
-            return;
-        }
-        try {
-            FileUtils.copyInputStreamToFile(context.getAssets().open("iperf3/" + EXECUTEABLE_NAME), cmdFile);
-            cmdFile.setExecutable(true, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        return context.getApplicationInfo().nativeLibraryDir + "/" + EXECUTABLE_NAME;
     }
 
     public void exec(String[] args) {
         new Thread(() -> {
-//            String[] cmdAndArgs = new String[args.length + 3];
-//            cmdAndArgs[0] = getCmdPath();
-//            cmdAndArgs[cmdAndArgs.length - 2] = "--tmp-template";
-//            cmdAndArgs[cmdAndArgs.length - 1] = context.getCacheDir().getAbsolutePath() + "/iperf3.XXXXXX";
-//            System.arraycopy(args, 0, cmdAndArgs, 1, args.length);
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//                Log.d("iperf3", "exec command: " + Arrays.stream(cmdAndArgs).collect(Collectors.joining(" ")));
-//            }
+            String[] cmdAndArgs = new String[args.length + 1];
+            cmdAndArgs[0] = getCmdPath();
+            System.arraycopy(args, 0, cmdAndArgs, 1, args.length);
 
             try {
-//                Log.i("CMD", "cmd: " + "chmod +x " + getCmdPath());
-//                execCommand("ls -l " + new File(getCmdPath()).getParentFile().getAbsolutePath());
-//                execCommand("/system/bin/chmod 755 " + getCmdPath());
-//                execCommand(context.getApplicationInfo().nativeLibraryDir + "/iperf3.so -c 192.168.31.151 -p 5201 -Z -R -P 4 -J -t 5 -l [128KB] -b [1GB] ");
-//                execCommand("ls -l " + context.getApplicationInfo().nativeLibraryDir);
-//                execCommand(context.getApplicationInfo().nativeLibraryDir + "/iperf3.so -help");
-                execCommand(context.getApplicationInfo().nativeLibraryDir + "/iperf3.so -c 192.168.31.151 -R");
-//                execCommand(getCmdPath() + " -help");
-//                execCommand(getCmdPath() + " -c 192.168.31.151 -R");
-//                Process process = Runtime.getRuntime().exec(cmdAndArgs);
-//                Process process = Runtime.getRuntime().exec(getCmdPath() + " -c 192.168.31.151 -R");
-//                parseArgs(cmdAndArgs);
+                Process process = Runtime.getRuntime().exec(cmdAndArgs);
+                Log.i(TAG, "command: " + String.join(" ", cmdAndArgs));
+                parseArgs(cmdAndArgs);
 
-//                try (
-//                        InputStreamReader in = new InputStreamReader(process.getInputStream());
-//                        BufferedReader outReader = new BufferedReader(in);
-////                        BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-//                ) {
-//                    String line;
-//                    while ((line = outReader.readLine()) != null) {
-//                        parseToCallback(line);
-//                    }
-//                    Log.i("CMD", "exitValue: " + process.waitFor());
-//                }
+                try (
+                        InputStreamReader in = new InputStreamReader(process.getInputStream());
+                        BufferedReader outReader = new BufferedReader(in);
+                        BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                ) {
+                    String line;
+                    while ((line = outReader.readLine()) != null) {
+                        parseToCallback(line);
+                    }
+                    while ((line = errReader.readLine()) != null) {
+                        parseToCallback(line);
+                    }
+
+                    // 等待进程结束
+                    process.waitFor();
+                    Log.i(TAG, "exitValue: " + process.waitFor());
+                }
 
             } catch (Exception e) {
-                Log.e("CMD", e.getMessage(), e);
+                Log.e(TAG, e.getMessage(), e);
             }
         }).start();
-    }
-
-    public void execCommand(String command) {
-        Log.d("CMD", "exec: " + command);
-        try {
-            Runtime runtime = Runtime.getRuntime();
-            Process proc = runtime.exec(command);
-
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-
-            // 读取标准输出流
-            String s;
-            while ((s = stdInput.readLine()) != null) {
-                Log.d("CMD", s);
-            }
-
-//            int c;
-//            while ((c = stdInput.read()) != -1) {
-//                char ch = (char) c;
-//                // 将字符累加到StringBuilder中
-//                StringBuilder output = new StringBuilder();
-//                output.append(ch);
-//                // 将累加的字符转换成字符串，并打印日志
-//                Log.d("CMD", output.toString());
-//                Thread.sleep(10);
-//            }
-
-            // 读取标准错误流
-            while ((s = stdError.readLine()) != null) {
-                Log.d("CMD", "Error: " + s);
-            }
-
-            // 等待进程结束
-            proc.waitFor();
-
-            // 打印退出值
-            Log.d("CMD", "exit value = " + proc.exitValue());
-        } catch (Exception e) {
-            Log.d("CMD", "Exception: " + e.getMessage());
-            Log.e("CMD", e.getMessage(), e);
-        }
     }
 
     private void parseArgs(final String[] cmdAndArgs) {
@@ -165,46 +89,51 @@ public class Iperf3Cmd {
                 isDown = true;
             }
         }
+        // 如果命令中未设置-P参数，取默认值0
+        // -P， --parallel n	要与服务器建立的同时连接数。默认值为 1。
+        if(parallels == 0) {
+            parallels = 1;
+        }
     }
 
     private void parseToCallback(String line) {
-        Log.d("CMD", line);
-//        callback.onRawOutput(line);
-//        if (TITLE_PATTERN.matcher(line).find()) {
-//            titleCnt++;
-//        }
-//        Matcher mr = CONNECTING_PATTERN.matcher(line);
-//        if (mr.find()) {
-//            String addr = mr.group(2);
-//            int port = Integer.parseInt(mr.group(3));
-//            callback.onConnecting(addr, port);
-//        }
-//        mr = CONNECTED_PATTERN.matcher(line);
-//        if (mr.find()) {
-//            String laddr = mr.group(2);
-//            int lport = Integer.parseInt(mr.group(3));
-//            String raddr = mr.group(4);
-//            int rport = Integer.parseInt(mr.group(5));
-//            callback.onConnected(laddr, lport, raddr, rport);
-//        }
-//        // 并发连接数为1和>1时，速率报告有以下两种格式，通过正则捕获组来截取数据
-//        // [  4]   9.00-10.00  sec  2.18 MBytes  18.3 Mbits/sec
-//        // [SUM]   9.00-10.00  sec  1.85 MBytes  15.5 Mbits/sec
-//        mr = REPORT_PATTERN.matcher(line);
-//        if (mr.find()) {
-//            float st = Float.parseFloat(mr.group(1));
-//            float et = Float.parseFloat(mr.group(2));
-//            String trans = mr.group(3);
-//            String bw = mr.group(5);
-//            if (isInterval(line)) {
-//                callback.onInterval(st, et, trans, bw, isDown);
-//            } else if (isResult(line)) {
-//                callback.onResult(st, et, trans, bw, isDown);
-//            }
-//        }
-//        if (ERR_PATTERN.matcher(line).find()) {
-//            callback.onError(line);
-//        }
+        Log.d(TAG, "output: " +  line);
+        callback.onRawOutput(line);
+        if (TITLE_PATTERN.matcher(line).find()) {
+            titleCnt++;
+        }
+        Matcher mr = CONNECTING_PATTERN.matcher(line);
+        if (mr.find()) {
+            String addr = mr.group(2);
+            int port = Integer.parseInt(mr.group(3));
+            callback.onConnecting(addr, port);
+        }
+        mr = CONNECTED_PATTERN.matcher(line);
+        if (mr.find()) {
+            String laddr = mr.group(2);
+            int lport = Integer.parseInt(mr.group(3));
+            String raddr = mr.group(4);
+            int rport = Integer.parseInt(mr.group(5));
+            callback.onConnected(laddr, lport, raddr, rport);
+        }
+        // 并发连接数为1和>1时，速率报告有以下两种格式，通过正则捕获组来截取数据
+        // [  4]   9.00-10.00  sec  2.18 MBytes  18.3 Mbits/sec
+        // [SUM]   9.00-10.00  sec  1.85 MBytes  15.5 Mbits/sec
+        mr = REPORT_PATTERN.matcher(line);
+        if (mr.find()) {
+            double st = Double.parseDouble(mr.group(1));
+            double et = Double.parseDouble(mr.group(2));
+            double trans = Double.parseDouble(mr.group(3));
+            double bw = Double.parseDouble(mr.group(5));
+            if (isInterval(line)) {
+                callback.onInterval(st, et, trans, bw);
+            } else if (isResult(line)) {
+                callback.onResult(st, et, trans, bw);
+            }
+        }
+        if (ERR_PATTERN.matcher(line).find()) {
+            callback.onError(line);
+        }
     }
 
     private boolean isInterval(String line) {
@@ -273,5 +202,36 @@ public class Iperf3Cmd {
         return (titleCnt > 1 && UDP_LOSS.matcher(line).find())
                 && ((parallels == 1)
                 || (parallels > 1 && line.startsWith("[SUM]")));
+    }
+
+    public void execCommand(String command) {
+        Log.d(TAG, "exec: " + command);
+        try {
+            Runtime runtime = Runtime.getRuntime();
+            Process proc = runtime.exec(command);
+
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+
+            // 读取标准输出流
+            String s;
+            while ((s = stdInput.readLine()) != null) {
+                Log.d(TAG, s);
+            }
+
+            // 读取标准错误流
+            while ((s = stdError.readLine()) != null) {
+                Log.d(TAG, "Error: " + s);
+            }
+
+            // 等待进程结束
+            proc.waitFor();
+
+            // 打印退出值
+            Log.d(TAG, "exit value = " + proc.exitValue());
+        } catch (Exception e) {
+            Log.d(TAG, "Exception: " + e.getMessage());
+            Log.e(TAG, e.getMessage(), e);
+        }
     }
 }
