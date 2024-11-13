@@ -24,7 +24,7 @@ public class Iperf3Cmd {
         this.callback = callback;
     }
 
-    private static final String EXECUTABLE_NAME = "iperf3.so";
+    private static final String EXECUTABLE_NAME = "libIperf3.so";
 
     private final Pattern CONNECTING_PATTERN = Pattern.compile("(Connecting to host (.*), port (\\d+))");
     private final Pattern CONNECTED_PATTERN = Pattern.compile("(local (.*) port (\\d+) connected to (.*) port (\\d+))");
@@ -50,6 +50,7 @@ public class Iperf3Cmd {
             System.arraycopy(args, 0, cmdAndArgs, 1, args.length);
 
             try {
+//                execCommand("ls -l " + context.getApplicationInfo().nativeLibraryDir);
                 Process process = Runtime.getRuntime().exec(cmdAndArgs);
                 Log.i(TAG, "command: " + String.join(" ", cmdAndArgs));
                 parseArgs(cmdAndArgs);
@@ -74,6 +75,7 @@ public class Iperf3Cmd {
 
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage(), e);
+                callback.onError(e.getMessage());
             }
         }).start();
     }
