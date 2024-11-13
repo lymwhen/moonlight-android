@@ -48,27 +48,41 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:id="@+id/v_settings"
         android:layout_alignParentBottom="true"
+        android:gravity="center_vertical"
         android:padding="8dp">
 
-        <ToggleButton
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textOn="4K@60Hz"
-            android:textOff="4K@60Hz" />
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:id="@+id/v_settings">
 
-        <ToggleButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textOn="1080P@120Hz"
-            android:textOff="1080P@120Hz"/>
+            <Spinner
+                android:id="@+id/spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:spinnerMode="dropdown"/>
+        </LinearLayout>
 
-        <ToggleButton
+        <TextView
+            android:id="@+id/tv_network_speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textOn="1080P@60Hz"
-            android:textOff="1080P@60Hz"/>
+            android:layout_margin="4dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textSize="20sp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="5dp"
+            android:visibility="visible"
+            android:fontFamily="@font/players"
+            android:background="#20FFFFFF"
+            android:clickable="true"
+            android:focusable="true"/>
     </LinearLayout>
 
 </RelativeLayout>

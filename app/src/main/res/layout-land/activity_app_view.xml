@@ -14,24 +14,10 @@
         android:gravity="center"
 
         android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/settingsButton"
-        android:layout_toEndOf="@+id/settingsButton"
-        android:layout_below="@+id/appListText"
-        android:layout_above="@+id/v_settings">
-    </RelativeLayout>
-
-    <ImageButton
-        android:id="@+id/settingsButton"
-        android:layout_width="70dp"
-        android:layout_height="65dp"
-        android:cropToPadding="false"
-        android:scaleType="fitXY"
-        android:nextFocusForward="@id/helpButton"
-        android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:src="@drawable/ic_settings"
-        style="?android:attr/borderlessButtonStyle"/>
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/v_settings_wrap">
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/appListText"
@@ -51,27 +37,52 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:id="@+id/v_settings"
+        android:gravity="center_vertical"
         android:layout_alignParentBottom="true"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:id="@+id/v_settings_wrap">
 
-        <ToggleButton
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:id="@+id/v_settings">
+
+            <ImageButton
+                android:id="@+id/settingsButton"
+                android:layout_width="50dp"
+                android:layout_height="46dp"
+                android:cropToPadding="false"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_settings"
+                style="?android:attr/borderlessButtonStyle"/>
+
+            <Spinner
+                android:id="@+id/spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:spinnerMode="dropdown"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_network_speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textOn="4K@60Hz"
-            android:textOff="4K@60Hz" />
-
-        <ToggleButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textOn="1080P@120Hz"
-            android:textOff="1080P@120Hz"/>
-
-        <ToggleButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textOn="1080P@60Hz"
-            android:textOff="1080P@60Hz"/>
+            android:layout_margin="4dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textSize="20sp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="5dp"
+            android:visibility="visible"
+            android:fontFamily="@font/players"
+            android:background="#20FFFFFF"
+            android:clickable="true"
+            android:focusable="true"/>
     </LinearLayout>
 
 </RelativeLayout>

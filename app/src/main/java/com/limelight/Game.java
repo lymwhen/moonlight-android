@@ -23,7 +23,6 @@ import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
-import com.limelight.nvstream.input.ControllerPacket;
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.nvstream.input.MouseButtonPacket;
 import com.limelight.nvstream.jni.MoonBridge;
@@ -272,7 +271,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 
         performanceOverlayView = findViewById(R.id.performanceOverlay);
-        Typeface typeFace =Typeface.createFromAsset(getAssets(), "fonts/Players.ttf");
+        Typeface typeFace =Typeface.createFromAsset(getAssets(), "font/Players.ttf");
         performanceOverlayView.setTypeface(typeFace);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);

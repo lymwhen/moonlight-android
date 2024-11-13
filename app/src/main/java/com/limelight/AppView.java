@@ -8,6 +8,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,9 +25,11 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -47,35 +50,21 @@ import com.limelight.utils.Dialog;
 import com.limelight.utils.ServerHelper;
 import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
+import com.limelight.utils.StringUtils;
 import com.limelight.utils.UiHelper;
 
-import com.limelight.computers.ComputerManagerListener;
-import com.limelight.computers.ComputerManagerService;
-import com.limelight.grid.AppGridAdapter;
 import com.limelight.iperf3.cmd.CmdCallback;
 import com.limelight.iperf3.cmd.Iperf3Cmd;
-import com.limelight.nvstream.http.ComputerDetails;
-import com.limelight.nvstream.http.NvApp;
-import com.limelight.nvstream.http.NvHTTP;
-import com.limelight.nvstream.http.PairingManager;
-import com.limelight.preferences.PreferenceConfiguration;
-import com.limelight.ui.AdapterFragment;
-import com.limelight.ui.AdapterFragmentCallbacks;
-import com.limelight.utils.CacheHelper;
-import com.limelight.utils.Dialog;
-import com.limelight.utils.ServerHelper;
-import com.limelight.utils.ShortcutHelper;
-import com.limelight.utils.SpinnerDialog;
-import com.limelight.utils.UiHelper;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class AppView extends Activity implements AdapterFragmentCallbacks, CompoundButton.OnCheckedChangeListener {
+public class AppView extends Activity implements AdapterFragmentCallbacks, AdapterView.OnItemSelectedListener {
 
     public static final String TAG_IPERF_TEST = "IPERF_TEST";
 
@@ -92,6 +81,8 @@ public class AppView extends Activity implements AdapterFragmentCallbacks, Compo
     private boolean inForeground;
     private boolean showHiddenApps;
     private HashSet<Integer> hiddenAppIds = new HashSet<>();
+    private TextView tvNetworkSpeed;
+    private String computerIpAddress;
 
     private final static int START_OR_RESUME_ID = 1;
     private final static int QUIT_ID = 2;
@@ -106,6 +97,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks, Compo
     public final static String UUID_EXTRA = "UUID";
     public final static String NEW_PAIR_EXTRA = "NewPair";
     public final static String SHOW_HIDDEN_APPS_EXTRA = "ShowHiddenApps";
+    public final static String IP_ADDRESS = "IpAddress";
 
     private ComputerManagerService.ComputerManagerBinder managerBinder;
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -338,6 +330,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks, Compo
         }
 
         String computerName = getIntent().getStringExtra(NAME_EXTRA);
+        computerIpAddress = getIntent().getStringExtra(IP_ADDRESS);
 
         TextView label = findViewById(R.id.appListText);
         setTitle(computerName);
@@ -357,82 +350,15 @@ public class AppView extends Activity implements AdapterFragmentCallbacks, Compo
             }
         });
 
-        vSettings = findViewById(R.id.v_settings);
+        // 加载常用分辨率
+        loadPopularResolutions();
 
-        // 反选设置的分辨率和帧率
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(AppView.this);
-        String curSettingsResolution = prefs.getString(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION);
-        String curSettingsFpg = prefs.getString(PreferenceConfiguration.FPS_PREF_STRING, PreferenceConfiguration.DEFAULT_FPS);
-
-        for (int i = 0; i < vSettings.getChildCount(); i++) {
-            ToggleButton tb = getSettingsToggleButtonAt(vSettings, i);
-            tb.setChecked(SETTINGS_RESOLUTIONS[i].equals(curSettingsResolution) && SETTINGS_FPS[i].equals(curSettingsFpg));
-            tb.setOnCheckedChangeListener(this);
-        }
-    }
-
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if(!buttonView.isFocused() && !buttonView.isPressed()) {
-            return;
-        }
-        if(isChecked) {
-            for (int i = 0; i < vSettings.getChildCount(); i++) {
-                ToggleButton tb = getSettingsToggleButtonAt(vSettings, i);
-                if(tb == buttonView) {
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(AppView.this);
-                    prefs.edit().putString(PreferenceConfiguration.RESOLUTION_PREF_STRING, SETTINGS_RESOLUTIONS[i]).apply();
-                    prefs.edit().putString(PreferenceConfiguration.FPS_PREF_STRING, SETTINGS_FPS[i]).apply();
-
-                } else {
-                    tb.setChecked(false);
-                }
-            }
-        } else {
-            buttonView.setChecked(true);
-        }
-    }
-
-    String[] SETTINGS_RESOLUTIONS = new String[] {"3840x2160", "1920x1080", "1920x1080"};
-    String[] SETTINGS_FPS = new String[] {"60", "120", "60"};
-
-    ViewGroup vSettings;
-
-    public ToggleButton getSettingsToggleButtonAt(ViewGroup v, int i) {
-        return (ToggleButton) v.getChildAt(i);
-
-        Iperf3Cmd c = new Iperf3Cmd(this, new CmdCallback() {
-            @Override
-            public void onRawOutput(String rawOutputLine) {
-                Log.d(TAG_IPERF_TEST, "onRawOutput: " + rawOutputLine);
-            }
-
-            @Override
-            public void onConnecting(String destHost, int destPort) {
-                Log.d(TAG_IPERF_TEST, "onConnecting: " + destHost + " " + destPort);
-            }
-
-            @Override
-            public void onConnected(String localAddr, int localPort, String destAddr, int destPort) {
-                Log.d(TAG_IPERF_TEST, "onConnected: " + localAddr + " " + localPort + " " + destAddr + " " + destPort);
-            }
-
-            @Override
-            public void onInterval(double timeStart, double timeEnd, double transfer, double bitrate) {
-                Log.d(TAG_IPERF_TEST, "onInterval: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
-            }
-
-            @Override
-            public void onResult(double timeStart, double timeEnd, double transfer, double bitrate) {
-                Log.d(TAG_IPERF_TEST, "onResult: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
-            }
-
-            @Override
-            public void onError(String errMsg) {
-                Log.d(TAG_IPERF_TEST, "onError: " + errMsg);
-            }
+        // 测速
+        tvNetworkSpeed = findViewById(R.id.tv_network_speed);
+        startIperf();
+        tvNetworkSpeed.setOnClickListener(v -> {
+            startIperf();
         });
-        c.exec(new String[] {"-c", "192.168.31.151", "-R"});
     }
 
     private void updateHiddenApps(boolean hideImmediately) {
@@ -759,6 +685,123 @@ public class AppView extends Activity implements AdapterFragmentCallbacks, Compo
         UiHelper.applyStatusBarPadding(listView);
         registerForContextMenu(listView);
         listView.requestFocus();
+    }
+
+    /**
+     * 加载常用分辨率
+     */
+    private void loadPopularResolutions() {
+        // 反选设置的分辨率和帧率
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(AppView.this);
+        String curSettingsResolution = prefs.getString(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.DEFAULT_RESOLUTION);
+        String curSettingsFpg = prefs.getString(PreferenceConfiguration.FPS_PREF_STRING, PreferenceConfiguration.DEFAULT_FPS);
+
+        Spinner spinner = findViewById(R.id.spinner);
+        String[] popularResolutions = getResources().getStringArray(R.array.popular_resolutions);
+        String curResolution = String.format("%s %sHz", curSettingsResolution.replace("x", " "), curSettingsFpg);
+        String[] fullPopularResolutions;
+        int curResolutionIndex = -1;
+        for (int i = 0; i < popularResolutions.length; i++) {
+            if(popularResolutions[i].equals(curResolution)) {
+                curResolutionIndex = i;
+                break;
+            }
+        }
+        if(curResolutionIndex >= 0) {
+            fullPopularResolutions = popularResolutions;
+        } else {
+            curResolutionIndex = 0;
+            fullPopularResolutions = new String[popularResolutions.length + 1];
+            fullPopularResolutions[0] = curResolution;
+            System.arraycopy(popularResolutions, 0, fullPopularResolutions, 1, popularResolutions.length);
+        }
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(
+                this,
+                R.layout.spinner_item_nv_layout,
+                R.id.spinner_item,
+                fullPopularResolutions);
+        adapter.setDropDownViewResource(R.layout.spinner_item_nv_layout);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
+        spinner.setSelection(curResolutionIndex);
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String[] selected = parent.getItemAtPosition(position).toString().replace("Hz", "").split(" ");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(AppView.this);
+        prefs.edit().putString(PreferenceConfiguration.RESOLUTION_PREF_STRING, String.format("%sx%s", selected[0], selected[1])).apply();
+        prefs.edit().putString(PreferenceConfiguration.FPS_PREF_STRING, selected[2]).apply();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Do nothing
+    }
+    // 加载常用分辨率--------------------------------------------------------
+
+    public void startIperf() {
+        tvNetworkSpeed.setText("Loading...");
+        setTextBySpeed(tvNetworkSpeed, -1);
+        new Iperf3Cmd(this, new CmdCallback() {
+            @Override
+            public void onRawOutput(String rawOutputLine) {
+            }
+
+            @Override
+            public void onConnecting(String destHost, int destPort) {
+                Log.d(TAG_IPERF_TEST, "onConnecting: " + destHost + " " + destPort);
+            }
+
+            @Override
+            public void onConnected(String localAddr, int localPort, String destAddr, int destPort) {
+                Log.d(TAG_IPERF_TEST, "onConnected: " + localAddr + " " + localPort + " " + destAddr + " " + destPort);
+            }
+
+            @Override
+            public void onInterval(double timeStart, double timeEnd, double transfer, double bitrate) {
+                Log.d(TAG_IPERF_TEST, "onInterval: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
+                runOnUiThread(() -> {
+                    long speed = (long)(bitrate * 1024 * 1024 * 1.024);
+                    tvNetworkSpeed.setText(StringUtils.bps2BpsStr(StringUtils.preferNum(speed)));
+                    setTextBySpeed(tvNetworkSpeed, speed);
+                });
+            }
+
+            @Override
+            public void onResult(double timeStart, double timeEnd, double transfer, double bitrate) {
+                Log.d(TAG_IPERF_TEST, "onResult: " + timeStart + " " + timeEnd + " " + transfer + " " + bitrate);
+                runOnUiThread(() -> {
+                    long speed = (long)(bitrate * 1024 * 1024 * 1.024);
+                    tvNetworkSpeed.setText(StringUtils.bps2BpsStr(StringUtils.preferNum((long)(bitrate * 1024 * 1024 * 1.024))));
+                    setTextBySpeed(tvNetworkSpeed, speed);
+                });
+            }
+
+            @Override
+            public void onError(String errMsg) {
+                Log.d(TAG_IPERF_TEST, "onError: " + errMsg);
+                runOnUiThread(() -> {
+//                    Toast.makeText(AppView.this, errMsg, Toast.LENGTH_SHORT).show();
+                    tvNetworkSpeed.setText("RETRY");
+                    setTextBySpeed(tvNetworkSpeed, 0);
+                });
+            }
+        }).exec(new String[] {"-c", computerIpAddress, "-R", "-f", "m", "--tmp-template", getCacheDir().getAbsolutePath() + "/iperf3.XXXXXX"});
+    }
+
+    private void setTextBySpeed(TextView view, long speed) {
+        int color;
+        if(speed > 500 * 1000 * 1000) {
+            color = R.color.green_nvidia;
+        } else if (speed > 100 * 1000 * 1000) {
+            color = R.color.yellow;
+        } else if (speed >= 0) {
+            color = R.color.red;
+        } else {
+            color = R.color.grey;
+        }
+        view.setTextColor(getResources().getColor(color));
     }
 
     public static class AppObject {
