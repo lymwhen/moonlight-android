@@ -33,6 +33,7 @@
         android:textColor="#76b900"
         android:textSize="12sp"
         android:preferKeepClear="true"
+        android:fontFamily="@font/players"
         android:visibility="gone" />
 
     <TextView

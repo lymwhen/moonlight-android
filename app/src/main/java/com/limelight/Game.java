@@ -271,8 +271,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 
         performanceOverlayView = findViewById(R.id.performanceOverlay);
-        Typeface typeFace =Typeface.createFromAsset(getAssets(), "font/Players.ttf");
-        performanceOverlayView.setTypeface(typeFace);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
 

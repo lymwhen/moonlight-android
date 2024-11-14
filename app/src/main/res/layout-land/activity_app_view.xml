@@ -25,7 +25,6 @@
         android:layout_height="65dp"
         android:layout_centerHorizontal="true"
         android:layout_alignParentTop="true"
-        android:layout_toRightOf="@id/settingsButton"
         android:gravity="center"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
@@ -39,7 +38,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:layout_alignParentBottom="true"
-        android:padding="8dp"
+        android:padding="4dp"
         android:id="@+id/v_settings_wrap">
 
         <LinearLayout
@@ -63,7 +62,6 @@
                 android:id="@+id/spinner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
                 android:spinnerMode="dropdown"/>
         </LinearLayout>
 
@@ -72,17 +70,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:textAppearance="?android:attr/textAppearanceSmall"
             android:textSize="20sp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
             android:paddingTop="6dp"
             android:paddingBottom="5dp"
             android:visibility="visible"
             android:fontFamily="@font/players"
-            android:background="#20FFFFFF"
+            android:focusable="true"
             android:clickable="true"
-            android:focusable="true"/>
+            android:background="@drawable/bg_text_selector"/>
     </LinearLayout>
 
 </RelativeLayout>
